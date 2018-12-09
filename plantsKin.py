@@ -10,7 +10,7 @@ CollectiveInteractionsName = ['Apical','Global','Apical_Apical_Morse','Apical_Gl
 GrowthMode = ['Apical','Exponential']
 
 
-
+#CHECK CHANGE CHECK CHANGE CHECK
 class skeletonElements:
     def __init__(self,x,theta0,curvature0,s,ds,radius,psi0 = 0,psiC0 = 0,psiG0 = 0,dt = .01,L=3,growth = {'name':'no','intensity':1,'direction':0},T_G_noise=1,sig_G_noise=0):
         
@@ -228,9 +228,8 @@ class Plant:
                         skel.growth['growthRate'] = 0
 
     def update(self,time_counter):
-#        self.break_skeleton()
         self.updateGrowth(time_counter)
-        
+######### 0912 BREAK SKELETON SHOULD HAPPEN HERE        
         for skel in self.skeleton:
             skel.update(time_counter)
         self.updateSpatialPosition()
@@ -275,6 +274,7 @@ class Roots:
         self.time_counter+=1
         if self.collectiveInteractions:
             for root in self.roots:
+######### 0912 IS REDUNDANT (CHECK WHERE "BREAK SKELETON" ENTERS)
                 root.break_skeleton()
             self.collectiveComputation()
             for k in range(0,self.N):
@@ -283,7 +283,8 @@ class Roots:
                     self.collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
                     self.collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
                     self.roots[k].updateCollectiveInteraction()
-                elif type(self.intensityCollective)==type([1]):
+######### 0912 IS REDUNDANT? (MAYBE THE SOURCE IS "BREAK SKELETON")
+                elif type(self.intensityCollective)==type([1]): 
                     qqq=0
                     for skel in self.roots[k].skeleton:
                         skel.interactions=[{'name': 'ApicalRelative', 'intensity': self.intensityCollective[k][qqq], 'direction': self.directionCollective[k][qqq]}]
@@ -339,6 +340,7 @@ class Roots:
                 self.intensityCollective[np.sum(np.abs(interactionTip),0)>0] =1.0
             
             if interaction['name'] == 'Apical_Apical_Morse':
+######### 0912 one should save interactions in a matrix (since it will be symmetrical) - APICAL - doesn't really matter
                 jnd=0
                 self.directionCollective=np.zeros((self.N,))
                 self.intensityCollective=np.zeros((self.N,))
@@ -353,8 +355,8 @@ class Roots:
                     for root2 in self.roots:
                         if root2==root:
                             continue
-                        R=bt.dist2d(X,root2.skeleton[-1],periodic=1,L=11)
-                        angle=bt.angle2d(X,root2.skeleton[-1],periodic=1,L=11)
+                        R=bt.dist2d(X,root2.skeleton[-1],periodic=1,L=self.N*self.dx)
+                        angle=bt.angle2d(X,root2.skeleton[-1],periodic=1,L=self.N*self.dx)
                         if interaction['attractionZone']==np.inf:
                             intensity=interaction['repulsionIntensity']-interaction['attractionIntensity']
                         else:
@@ -381,9 +383,9 @@ class Roots:
                     for root2 in self.roots:
                         if root2==root:
                             continue
-                        for skel in root.skeleton:
-                            R=bt.dist2d(X,skel,periodic=1,L=11)
-                            angle=bt.angle2d(X,skel,periodic=1,L=11)
+                        for skel in root2.skeleton:
+                            R=bt.dist2d(X,skel,periodic=1,L=self.N*self.dx)
+                            angle=bt.angle2d(X,skel,periodic=1,L=self.N*self.dx)
                             if interaction['attractionZone']==np.inf:
                                 intensity=interaction['repulsionIntensity']-interaction['attractionIntensity']
                             else:
@@ -395,6 +397,7 @@ class Roots:
                     jnd+=1
 
             if interaction['name'] == 'Global_Global_Morse':
+######### 0912 one should save interactions in a matrix (since it will be symmetrical) !!!
                 jnd=0
                 self.directionCollective=[]
                 self.intensityCollective=[]
@@ -413,8 +416,8 @@ class Roots:
                             if root2==root:
                                 continue
                             for skel in root2.skeleton:
-                                R=bt.dist2d(X,skel,periodic=1,L=11)
-                                angle=bt.angle2d(X,skel,periodic=1,L=11)
+                                R=bt.dist2d(X,skel,periodic=1,L=self.N*self.dx)
+                                angle=bt.angle2d(X,skel,periodic=1,L=self.N*self.dx)
                                 if interaction['attractionZone']==np.inf:
                                     intensity=interaction['repulsionIntensity']-interaction['attractionIntensity']
                                 else:
@@ -465,6 +468,10 @@ class Roots:
 
     def tipDistance(self):
         self.distanceTip,self.alphaTip = bt.distPointToPoint(self.xTip,self.thetaTip,1,11)
+
+
+######### 0912 the growth rate should be changed following: d(eps)/dt \propto (P-Y-sig), where F=A*sig
+#########      + Use lists for all interaction
 
     def elastic_response(self):
         FBR=0.5
